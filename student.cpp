@@ -15,6 +15,8 @@
 #define COLUMNS_WIDTH  (COLUMN0_WIDTH + COLUMN1_WIDTH + COLUMN2_WIDTH \
                         + COLUMN3_WIDTH + COLUMN4_WIDTH)
 
+// TODO: eliminate the Feedback logic
+
 // menu methods
 void student_master(char&);
 void student_entry(char&);
@@ -47,8 +49,16 @@ public:
         this->roll = roll;
     }
 
-    void set_data_from_user() {
+    int set_uid_from_user() {
         cout << "Enter Unique ID: "; cin >> uid;
+        if (uid < 1) {
+            cout << "Student UID must be a positive integer\n";
+            return 0;
+        }
+        return 1;
+    }
+
+    void set_data_from_user() {
         cout << "Enter Student Name: "; gets(name);
         cout << "Enter Class: "; cin >> clas;
         cout << "Enter Section: "; gets(sec);
@@ -173,26 +183,51 @@ void student_master(char &rmm) {
 }
 
 void student_entry(char &rsm) {
-    Student goodperson;
+    Student goodperson, duplicate;
     char res='n';
-    ofstream fout("C:\\CODES\\CPP\\STUDENT\\STUDENTS.DAT", ios::app);
-    if (!fout) {
+    fstream students_fio(
+        "C:\\CODES\\CPP\\STUDENT\\STUDENTS.DAT",
+        ios::in | ios::out
+    );
+    if (!students_fio) {
         cout << "Unable to open file \"STUDENTS.DAT\"\n"; getch();
         rsm = 'y'; return;
     }
+    int flag;
 
     do {
+        students_fio.clear(); // Reset students_fio
+        students_fio.seekg(0);  // prepare for searching
+        flag = 0;
+
         clrscr();
         cout << "\t S T U D E N T   E N T R Y " << endl;
         cout << "\t=+=+=+=+=+=+=+=+=+=+=+=+=+=" << endl;
-        goodperson.set_data_from_user();
-        fout.write((char*) &goodperson, sizeof(goodperson));
-        cout << "\nData written successfully!\n";
-        cout << "Would you like to enter another? [Y|n]: ";
+        if (goodperson.set_uid_from_user()) {
+            while (students_fio.read((char*) &duplicate, sizeof(duplicate)))
+                if (duplicate.get_uid() == goodperson.get_uid())
+                    { flag = 1; break; }
+            if (flag) {
+                cout << "Student with similar UID already exists\n";
+                duplicate.print_details(); cout << endl;
+            }
+            else
+                goodperson.set_data_from_user();
+        } else
+            flag = 1; // hack to get past the if block below
+
+        if (!flag) {
+            students_fio.clear();
+            students_fio.seekg(0, ios::end); // prepare to append
+            students_fio.write((char*) &goodperson, sizeof(goodperson));
+            cout << "\nData written successfully!\n";
+            cout << "Would you like to enter another? [Y|n]: ";
+        } else
+            cout << "Would you like to try again? [Y|n]: ";
         res = tolower(getche());
     } while (res == 'y');
 
-    fout.close();
+    students_fio.close();
     rsm = 'y'; // Feedback to caller for repetition of Student Master
 }
 
@@ -224,13 +259,13 @@ void display_students(char &rsm) {
 }
 
 void marks_entry(char &rmm) {
-    //ofstream fout("C:\\CODES\\CPP\\STUDENT\\MARKS.DAT", ios::app);
-    ifstream fin("C:\\CODES\\CPP\\STUDENT\\STUDENTS.DAT");
+    // ofstream marks_fout("C:\\CODES\\CPP\\STUDENT\\MARKS.DAT", ios::app);
+    ifstream students_fin("C:\\CODES\\CPP\\STUDENT\\STUDENTS.DAT");
     Student goodperson; Marks goodmarks;
     int flag; char res='n';
 
     do {
-        fin.clear(); fin.seekg(0); // Reset students ifstream
+        students_fin.clear(); students_fin.seekg(0); // Reset students_fin
         flag = 0;
 
         clrscr();
@@ -238,25 +273,25 @@ void marks_entry(char &rmm) {
         cout << "\t=+=+=+=+=+=+=+=+=+=+=+=" << endl;
         goodmarks.set_student_uid_from_user();
 
-        while (fin.read((char*) &goodperson, sizeof(goodperson)))
+        while (students_fin.read((char*) &goodperson, sizeof(goodperson)))
             if (goodperson.get_uid() == goodmarks.get_uid())
                 { flag = 1; break; }
 
         if (!flag) {
             cout << "Entered UID doesn't match any existing student\n";
             cout << "Try going back and make an entry for the student\n";
-            cout << "Did you mistype? [Y|n] ";
+            cout << "Did you mistype? [Y|n]: ";
         } else {
             goodperson.print_details();
-            //goodmarks.set_marks_from_user();
-            //fout.write((char*) &goodmarks, sizeof(goodperson));
+            // goodmarks.set_marks_from_user();
+            // marks_fout.write((char*) &goodmarks, sizeof(goodperson));
             cout << "\nData written successfully!\n";
             cout << "Would you like to enter another? [Y|n]: ";
         }
         res = tolower(getche());
     } while (res == 'y');
-    //fout.close();
-    fin.close();
+    // marks_fout.close();
+    students_fin.close();
     rmm = 'y'; // Feedback to caller for repetition of Main Menu
 }
 
