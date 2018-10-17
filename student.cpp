@@ -31,6 +31,13 @@ private:
     int uid, clas, roll;
     char name[32], sec[2];
 
+    int cancel_student_entry() {
+        cout << "Do you want to cancel adding this student? [Y|n]: ";
+        if (tolower(getche()) == 'y') return 1;
+        cout << endl;
+        return 0;
+    }
+
 public:
     Student() {
         // assign garbage
@@ -58,11 +65,40 @@ public:
         return 1;
     }
 
-    void set_data_from_user() {
-        cout << "Enter Student Name: "; gets(name);
-        cout << "Enter Class: "; cin >> clas;
-        cout << "Enter Section: "; gets(sec);
-        cout << "Enter Roll No.: "; cin >> roll;
+    int set_data_from_user() {
+        do {
+            cout << "Enter Student Name: "; gets(name);
+            if (strcmp(name, "") == 0) {
+                cout << "Student name cannot be blank\n";
+                if (cancel_student_entry()) return 0;
+            } else break;
+        } while (1);
+
+        do {
+            cout << "Enter Class: "; cin >> clas;
+            if (clas < 1 || clas > 12) {
+                cout << "Class must be a positive integer "
+                    << "less than or equal to 12.\n";
+                if (cancel_student_entry()) return 0;
+            } else break;
+        } while (1);
+
+        do {
+            cout << "Enter Section: "; sec[0] = getche(); cout << endl;
+            strcpy(sec, strupr(sec)); // convert to uppercase
+            if ((strcmp(sec, "") == 0) || !isalpha(sec[0])) {
+                cout << "Section must be a single alphabet\n";
+                if (cancel_student_entry()) return 0;
+            } else break;
+        } while (1);
+
+        do {
+            cout << "Enter Roll No.: "; cin >> roll;
+            if (roll < 1) {
+                cout << "Roll no. must be a positive integer\n";
+                if (cancel_student_entry()) return 0;
+            } else break;
+        } while (1);
     }
 
     int get_uid() { return uid; }
@@ -212,7 +248,10 @@ void student_entry(char &rsm) {
                 duplicate.print_details(); cout << endl;
             }
             else
-                goodperson.set_data_from_user();
+                if (!goodperson.set_data_from_user()) {
+                    students_fio.close();
+                    rsm = 'y'; return;
+                }
         } else
             flag = 1; // hack to get past the if block below
 
