@@ -31,13 +31,6 @@ private:
     int uid, clas, roll;
     char name[32], sec[2];
 
-    int cancel_student_entry() {
-        cout << "Do you want to cancel adding this student? [Y|n]: ";
-        if (tolower(getche()) == 'y') return 1;
-        cout << endl;
-        return 0;
-    }
-
 public:
     Student() {
         // assign garbage
@@ -56,9 +49,21 @@ public:
         this->roll = roll;
     }
 
+    int cancel_student_entry() {
+        cout << "Do you want to cancel adding this student? [Y|n]: ";
+        if (tolower(getche()) == 'y') return 1;
+        cout << endl;
+        return 0;
+    }
+
     int set_uid_from_user() {
-        cout << "Enter Unique ID: "; cin >> uid;
-        if (uid < 1) {
+        char input_buffer[8]; int tm_flag = 0;
+        cin.ignore(10, '\n'); // eat chars including newline
+        cout << "Enter Unique ID: "; cin.getline(input_buffer, 8);
+        for (int i=0; i<strlen(input_buffer); i++)
+            if (!isdigit(input_buffer[i])) tm_flag = 1;
+        if (!tm_flag) uid = atoi(input_buffer);
+        if (tm_flag || uid < 1) {
             cout << "Student UID must be a positive integer\n";
             return 0;
         }
@@ -239,21 +244,25 @@ void student_entry(char &rsm) {
         clrscr();
         cout << "\t S T U D E N T   E N T R Y " << endl;
         cout << "\t=+=+=+=+=+=+=+=+=+=+=+=+=+=" << endl;
-        if (goodperson.set_uid_from_user()) {
-            while (students_fio.read((char*) &duplicate, sizeof(duplicate)))
-                if (duplicate.get_uid() == goodperson.get_uid())
-                    { flag = 1; break; }
-            if (flag) {
-                cout << "Student with similar UID already exists\n";
-                duplicate.print_details(); cout << endl;
-            }
-            else
-                if (!goodperson.set_data_from_user()) {
-                    students_fio.close();
-                    rsm = 'y'; return;
+        do {
+            if (goodperson.set_uid_from_user()) {
+                while(students_fio.read((char*) &duplicate, sizeof(duplicate)))
+                    if (duplicate.get_uid() == goodperson.get_uid())
+                        { flag = 1; break; }
+                if (flag) {
+                    cout << "Student with similar UID already exists\n";
+                    duplicate.print_details(); cout << endl;
+                } else {
+                    if (!goodperson.set_data_from_user()) {
+                        students_fio.close();
+                        rsm = 'y'; return;
+                    } break;
                 }
-        } else
-            flag = 1; // hack to get past the if block below
+            } else if (goodperson.cancel_student_entry()) {
+                students_fio.close();
+                rsm = 'y'; return;
+            }
+        } while (1);
 
         if (!flag) {
             students_fio.clear();
