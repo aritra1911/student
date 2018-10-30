@@ -58,8 +58,9 @@ public:
 
     int set_uid_from_user() {
         char input_buffer[8]; int tm_flag = 0;
-        cin.ignore(10, '\n'); // eat chars including newline
         cout << "Enter Unique ID: "; cin.getline(input_buffer, 8);
+        if (strlen(input_buffer) == 7) // in case overflowed
+            cin.ignore(100, '\n'); // eat chars including newline
         for (int i=0; i<strlen(input_buffer); i++)
             if (!isdigit(input_buffer[i])) tm_flag = 1;
         if (!tm_flag) uid = atoi(input_buffer);
@@ -71,8 +72,11 @@ public:
     }
 
     int set_data_from_user() {
+        char input_buffer[8]; int tm_flag;
         do {
-            cout << "Enter Student Name: "; gets(name);
+            cout << "Enter Student Name: "; cin.getline(name, 32);
+            if (strlen(name) == 31) // in case overflowed
+                cin.ignore(100, '\n'); // eat chars including newline
             if (strcmp(name, "") == 0) {
                 cout << "Student name cannot be blank\n";
                 if (cancel_student_entry()) return 0;
@@ -80,8 +84,14 @@ public:
         } while (1);
 
         do {
-            cout << "Enter Class: "; cin >> clas;
-            if (clas < 1 || clas > 12) {
+            tm_flag = 0;
+            cout << "Enter Class: "; cin.getline(input_buffer, 8);
+            if (strlen(input_buffer) == 7) // in case overflowed
+                cin.ignore(100, '\n'); // eat chars including newline
+            for (int i=0; i<strlen(input_buffer); i++)
+                if (!isdigit(input_buffer[i])) tm_flag = 1;
+            if (!tm_flag) clas = atoi(input_buffer);
+            if (tm_flag || clas < 1 || clas > 12) {
                 cout << "Class must be a positive integer "
                     << "less than or equal to 12.\n";
                 if (cancel_student_entry()) return 0;
@@ -89,7 +99,8 @@ public:
         } while (1);
 
         do {
-            cout << "Enter Section: "; sec[0] = getche(); cout << endl;
+            cout << "Enter Section: "; cin.getline(sec, 2);
+            cin.ignore(100, '\n');
             strcpy(sec, strupr(sec)); // convert to uppercase
             if ((strcmp(sec, "") == 0) || !isalpha(sec[0])) {
                 cout << "Section must be a single alphabet\n";
@@ -97,9 +108,18 @@ public:
             } else break;
         } while (1);
 
+        // clear input_buffer
+        for (int j=0; j<8; j++) input_buffer[j] = '\0';
+
         do {
-            cout << "Enter Roll No.: "; cin >> roll;
-            if (roll < 1) {
+            tm_flag = 0;
+            cout << "Enter Roll No.: "; cin.getline(input_buffer, 8);
+            if (strlen(input_buffer) == 7) // in case overflowed
+                cin.ignore(100, '\n'); // eat chars including newline
+            for (int i=0; i<strlen(input_buffer); i++)
+                if (!isdigit(input_buffer[i])) tm_flag = 1;
+            if (!tm_flag) roll = atoi(input_buffer);
+            if (tm_flag || roll < 1) {
                 cout << "Roll no. must be a positive integer\n";
                 if (cancel_student_entry()) return 0;
             } else break;
@@ -235,16 +255,17 @@ void student_entry(char &rsm) {
         rsm = 'y'; return;
     }
     int flag;
+    cin.ignore(10, '\n'); // eat chars including newline
 
     do {
-        students_fio.clear(); // Reset students_fio
-        students_fio.seekg(0);  // prepare for searching
-        flag = 0;
-
         clrscr();
         cout << "\t S T U D E N T   E N T R Y " << endl;
         cout << "\t=+=+=+=+=+=+=+=+=+=+=+=+=+=" << endl;
         do {
+            students_fio.clear(); // Reset students_fio
+            students_fio.seekg(0);  // prepare for searching
+            flag = 0;
+
             if (goodperson.set_uid_from_user()) {
                 while(students_fio.read((char*) &duplicate, sizeof(duplicate)))
                     if (duplicate.get_uid() == goodperson.get_uid())
