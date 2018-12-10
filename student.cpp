@@ -57,14 +57,8 @@ public:
     }
 
     int set_uid_from_user() {
-        char input_buffer[8]; int tm_flag = 0;
-        cout << "Enter Unique ID: "; cin.getline(input_buffer, 8);
-        if (strlen(input_buffer) == 7) // in case overflowed
-            cin.ignore(100, '\n'); // eat chars including newline
-        for (int i=0; i<strlen(input_buffer); i++)
-            if (!isdigit(input_buffer[i])) tm_flag = 1;
-        if (!tm_flag) uid = atoi(input_buffer);
-        if (tm_flag || uid < 1) {
+        cout << "Enter Unique ID: "; cin >> uid;
+        if (uid < 1) {
             cout << "Student UID must be a positive integer\n";
             return 0;
         }
@@ -72,58 +66,10 @@ public:
     }
 
     int set_data_from_user() {
-        char input_buffer[8]; int tm_flag;
-        do {
-            cout << "Enter Student Name: "; cin.getline(name, 32);
-            if (strlen(name) == 31) // in case overflowed
-                cin.ignore(100, '\n'); // eat chars including newline
-            if (strcmp(name, "") == 0) {
-                cout << "Student name cannot be blank\n";
-                if (cancel_student_entry()) return 0;
-            } else break;
-        } while (1);
-
-        do {
-            tm_flag = 0;
-            cout << "Enter Class: "; cin.getline(input_buffer, 8);
-            if (strlen(input_buffer) == 7) // in case overflowed
-                cin.ignore(100, '\n'); // eat chars including newline
-            for (int i=0; i<strlen(input_buffer); i++)
-                if (!isdigit(input_buffer[i])) tm_flag = 1;
-            if (!tm_flag) clas = atoi(input_buffer);
-            if (tm_flag || clas < 1 || clas > 12) {
-                cout << "Class must be a positive integer "
-                    << "less than or equal to 12.\n";
-                if (cancel_student_entry()) return 0;
-            } else break;
-        } while (1);
-
-        do {
-            cout << "Enter Section: "; cin.getline(sec, 2);
-            cin.ignore(100, '\n');
-            strcpy(sec, strupr(sec)); // convert to uppercase
-            if ((strcmp(sec, "") == 0) || !isalpha(sec[0])) {
-                cout << "Section must be a single alphabet\n";
-                if (cancel_student_entry()) return 0;
-            } else break;
-        } while (1);
-
-        // clear input_buffer
-        for (int j=0; j<8; j++) input_buffer[j] = '\0';
-
-        do {
-            tm_flag = 0;
-            cout << "Enter Roll No.: "; cin.getline(input_buffer, 8);
-            if (strlen(input_buffer) == 7) // in case overflowed
-                cin.ignore(100, '\n'); // eat chars including newline
-            for (int i=0; i<strlen(input_buffer); i++)
-                if (!isdigit(input_buffer[i])) tm_flag = 1;
-            if (!tm_flag) roll = atoi(input_buffer);
-            if (tm_flag || roll < 1) {
-                cout << "Roll no. must be a positive integer\n";
-                if (cancel_student_entry()) return 0;
-            } else break;
-        } while (1);
+        cout << "Enter Student Name: "; gets(name);
+        cout << "Enter Class: "; cin >> clas;
+        cout << "Enter Section: "; gets(sec);
+        cout << "Enter Roll No.: "; cin >> roll;
     }
 
     int get_uid() { return uid; }
@@ -328,7 +274,7 @@ void display_students(char &rsm) {
 }
 
 void marks_entry(char &rmm) {
-    // ofstream marks_fout("C:\\CODES\\CPP\\STUDENT\\MARKS.DAT", ios::app);
+    ofstream marks_fout("C:\\CODES\\CPP\\STUDENT\\MARKS.DAT", ios::app);
     ifstream students_fin("C:\\CODES\\CPP\\STUDENT\\STUDENTS.DAT");
     Student goodperson; Marks goodmarks;
     int flag; char res='n';
@@ -352,14 +298,14 @@ void marks_entry(char &rmm) {
             cout << "Did you mistype? [Y|n]: ";
         } else {
             goodperson.print_details();
-            // goodmarks.set_marks_from_user();
-            // marks_fout.write((char*) &goodmarks, sizeof(goodperson));
+            goodmarks.set_marks_from_user();
+            marks_fout.write((char*) &goodmarks, sizeof(goodperson));
             cout << "\nData written successfully!\n";
             cout << "Would you like to enter another? [Y|n]: ";
         }
         res = tolower(getche());
     } while (res == 'y');
-    // marks_fout.close();
+    marks_fout.close();
     students_fin.close();
     rmm = 'y'; // Feedback to caller for repetition of Main Menu
 }
